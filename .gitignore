@@ -1,0 +1,5 @@
+**/*.bak
+.cursorindexingignore
+nvim/.cursorignore
+nvim/nvim-win64.zip
+**/.specstory
