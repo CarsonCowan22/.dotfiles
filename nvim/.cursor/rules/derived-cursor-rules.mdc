@@ -1,0 +1,54 @@
+---
+description: AI rules derived by SpecStory from the project AI interaction history
+globs: *
+---
+
+## HEADERS
+
+## TECH STACK
+
+Neovim, lazy.nvim, TypeScript, ESLint, Tailwind CSS, Node.js, pnpm
+
+## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+
+The project documentation includes:
+*   A README file documenting the Neovim configuration structure and setup instructions.
+*   A PowerShell setup script to help with the installation of required dependencies.
+
+## CODING STANDARDS
+
+### General
+
+### File Naming
+
+### Code Style
+
+### Comments
+
+## WORKFLOW & RELEASE RULES
+
+## DEBUGGING
+
+## SECURITY
+
+## DEPLOYMENT
+
+## MONITORING & LOGGING
+
+## AI CODING ASSISTANT USAGE GUIDELINES
+
+### Neovim Configuration
+
+When generating Neovim configurations, adhere to the following guidelines:
+
+*   **Modular Structure**: Organize the configuration into a modular structure with separate files for options, keymaps, auto commands, plugins, etc.
+*   **Project-Specific Settings**: Implement project-specific settings that automatically load based on the current working directory. Use `after/plugin/project.lua` for project-specific configurations.
+*   **Path Handling**: Ensure that file paths are handled flexibly and robustly, accounting for potential variations in directory structures. Use `vim.fn.fnameescape` when constructing file paths.
+*   **Autocmd Syntax**: Use the correct syntax for auto commands, using the array format `{ "BufRead", "BufNewFile" }` for multiple events.
+*   **LSP Configuration**: Configure LSP support for TypeScript, ESLint, and Tailwind CSS. Use `ts_ls` instead of the deprecated `tsserver`.
+*   **Plugin Management**: Use lazy.nvim for plugin management and ensure that all required plugins are installed.
+*   **Key Mappings**: Provide sensible key mappings for file navigation, LSP functionality, and project-specific commands.
+*   **Custom Commands**: Create custom commands for common tasks such as running pnpm commands, creating new components, and formatting code.
+*   **Error Handling**: Ensure that the configuration handles potential errors gracefully, such as missing project paths or misconfigured plugins.
+*   **Comprehensive Documentation**: Create a comprehensive README file that documents the configuration structure, key mappings, custom commands, installation instructions, and troubleshooting tips.
+*   **Cursor-Like UI**: When requested, configure the Neovim theme, status line, file explorer, fuzzy finder, completion system, and other UI elements to closely match the appearance and behavior of the Cursor editor. This includes using a dark theme with a custom color palette, rounded borders, modern popup styling, smooth animations, a modern notification system, and a command palette with fuzzy search.
