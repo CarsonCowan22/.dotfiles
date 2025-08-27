@@ -1,0 +1,720 @@
+---
+description: AI rules derived by SpecStory from the project AI interaction history
+globs: *
+---
+
+## <headers/>
+
+## TECH STACK
+
+*   Neovim
+*   lazy.nvim
+*   GitHub Copilot
+*   `zbirenbaum/copilot.lua`
+*   `zbirenbaum/copilot-cmp`
+*   nvim-cmp
+*   Telescope
+*   fzf
+*   toggleterm
+*   winget (for installing command line tools on Windows)
+*   `BurntSushi.ripgrep.MSVC` (ripgrep installation via winget)
+*   `sharkdp.fd` (fd installation via winget)
+*   nvim-web-devicons
+*   plenary.nvim
+*   nui.nvim
+*   `folke/which-key.nvim`
+*   `akinsho/bufferline.nvim`
+*   `nvim-telescope/telescope-fzf-native.nvim`
+*   `akinsho/toggleterm.nvim`
+*   `lukas-reineke/indent-blankline.nvim`
+*   `tpope/vim-fugitive`
+*   `lewis6991/gitsigns.nvim`
+*   `f-person/git-blame.nvim`
+*   `sindrets/diffview.nvim`
+*   `pteroctopus/faster.nvim`
+*   Oil.nvim
+*   Blink.cmp
+*   Lspconfig + mason
+
+## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+
+## CODING STANDARDS
+
+## WORKFLOW & RELEASE RULES
+
+## DEBUGGING
+
+## KEYBINDING CONVENTIONS
+
+*   `<leader>?` to view all mappings.
+*   `gt` and `gT` to switch tabs (bufferline).
+*   `<C-\>` to toggle the terminal (toggleterm).
+*   `<leader>m` Show all messages.
+*   `<leader>h` Check health.
+*   `<leader>l` Show LSP log.
+*   `<leader>n` Show Noice history
+*   `zh` Scroll left.
+*   `zl` Scroll right.
+*   `zH` Scroll left half screen.
+*   `zL` Scroll right half screen.
+*   `<leader>r` Restart LSP (LspRestart).
+*   `<leader>s` Stop LSP (LspStop).
+*   `<leader>g` Fix ripgrep PATH (FixRipgrep).
+*   `<leader>cp` Restart Copilot.
+*   `<leader>cc` Clear Copilot suggestions.
+*   `<leader>cr` Reset Copilot completely.
+*   `<leader>ac` Avante chat / Copilot chat.
+*   `<leader>aa` Avante ask on selection / Copilot explain selection.
+*   `<leader>p` Check performance metrics (PerformanceCheck).
+*   `<leader>fv` Check FasterVim status (FasterVimStatus).
+*   `<leader>gs` Git status
+*   `<leader>ga` Git add all
+*   `<leader>glo` Git log
+*   `<leader>gbr` Git branch
+*   `<leader>gco` Git checkout
+*   `<leader>gm` Git merge
+*   `<leader>gst` Git stash
+*   `<leader>gsp` Git stash pop
+*   `<leader>gsl` Git stash list
+*   `<leader>gr` Git reset
+*   `<leader>gre` Git remote
+*   `<leader>gf` Git fetch
+*   `<leader>tgf` Git files
+*   `<leader>tgc` Git commits
+*   `<leader>tgb` Git branches
+*   `<leader>tgs` Git status
+*   `<leader>tc` Test completion
+*   `<leader>ea` Enable auto-completion
+*   `<leader>cc` Test command-line completion
+*   `<leader>fw` Force enable wildmenu
+
+## AI ASSISTANT SPECIFIC RULES
+
+*   When assisting with Neovim configurations on Windows, prefer `zbirenbaum/copilot.lua` and `zbirenbaum/copilot-cmp`.
+*   When configuring `lualine.nvim`, avoid using extensions that do not exist, such as `telescope` or `fugitive`.
+*   When configuring telescope-fzf on Windows, be aware that it requires compilation with `make`, which might not work. Skip the build on Windows to avoid compilation issues.
+*   When configuring `lualine.nvim` with `catppuccin.nvim`, ensure that the `get()` method is replaced with `get_bufferline()` or handle the case where `get_bufferline()` is not available by using the following code:
+
+```lua
+local highlights = nil
+local ok, cat = pcall(require, "catppuccin.groups.integrations.bufferline")
+if ok then
+  -- Try different possible method names
+  if cat.get_bufferline then
+    highlights = cat.get_bufferline()
+  elseif cat.get then
+    highlights = cat.get()
+  end
+end
+```
+*   Always ensure GitHub Copilot is correctly authenticated to avoid "Invalid range" errors. Prefer setting the `GITHUB_COPILOT_TOKEN` environment variable.
+*   When assisting users with setting up Copilot, prioritize setting the `GITHUB_COPILOT_TOKEN` environment variable over creating an authentication file. If the user experiences "Invalid range" errors, guide them to authenticate Copilot and set the `GITHUB_COPILOT_TOKEN` environment variable.
+*   If the user has `gcc` installed but treesitter is not working, explicitly set `vim.env.CC = "gcc"` and ensure that nvim-treesitter handles missing compilers gracefully by setting `require("nvim-treesitter.install").compilers = { "gcc", "cc", "clang", "cl" }`. Also set `auto_install = false` to prevent errors.
+*   If the user is on Windows and horizontal scroll is not working, consider adding the following settings to the configuration:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+*   If the user is experiencing ESLint errors in a Next.js project, ensure that the following dependencies are installed: `@next/eslint-plugin-next` and `eslint-plugin-react-hooks`.
+*   When configuring Telescope, handle missing `ripgrep` gracefully by checking if the executable is available and providing a fallback:
+    *   Check if `vim.fn.executable("rg") == 1`
+    *   If not, fallback to `find` and `grep`
+* If Copilot is generating "Invalid buffer id" errors, add the following configuration to `ai.lua` to handle the buffer lifecycle:
+
+```lua
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    -- Safely clear any pending suggestions for this buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Clean up when leaving buffers
+vim.api.nvim_create_autocmd("BufLeave", {
+  callback = function(args)
+    -- Safely clear suggestions when leaving buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Handle VimEnter to ensure clean state
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    -- Initialize copilot safely
+    pcall(function()
+      if copilot.suggestion then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+```
+*   Also add the following commands to handle copilot:
+```lua
+api.nvim_create_user_command("CopilotRestart", function()
+  -- Safely restart Copilot using utility function
+  local utils = require("utils.helpers")
+  utils.safe_copilot_restart()
+  vim.notify("Copilot restarted successfully", vim.log.levels.INFO)
+end, {})
+
+api.nvim_create_user_command("CopilotClear", function()
+  -- Clear Copilot suggestions using utility function
+  local utils = require("utils.helpers")
+  utils.safe_copilot_clear()
+  vim.notify("Copilot suggestions cleared", vim.log.levels.INFO)
+end, {})
+```
+Add keybindings for these commands:
+```lua
+map("n", "<leader>cp", ":CopilotRestart<CR>", { desc = "Restart Copilot" })
+map("n", "<leader>cc", ":CopilotClear<CR>", { desc = "Clear Copilot suggestions" })
+```
+* If getting errors related to `telescope.nvim` and `ripgrep` or `find`, the telescope configuration should implement a check for `ripgrep` and, if not found, fall back to `find` and `grep`. The following code can be used:
+
+```lua
+find_files = {
+  hidden = true,
+  find_command = function()
+    -- Check if ripgrep is available
+    if vim.fn.executable("rg") == 1 then
+      return { "rg", "--files", "--hidden", "--glob", "!**/.git/*" }
+    else
+      -- Fallback to find if ripgrep is not available
+      return { "find", ".", "-type", "f", "-not", "-path", "./.git/*" }
+    end
+  end,
+},
+```
+
+Also update the `vimgrep_arguments` to use the same logic:
+
+```lua
+vimgrep_arguments = function()
+  -- Check if ripgrep is available
+  if vim.fn.executable("rg") == 1 then
+    return {
+      "rg",
+      "--color=never",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--smart-case",
+    }
+  else
+    -- Fallback to grep if ripgrep is not available
+    return {
+      "grep",
+      "-n",
+      "-H",
+      "-i",
+      "-s",
+    }
+  end
+end,
+```
+*   If there are issues with Catppuccin and bufferline, ensure that the `get()` method is replaced with `get_bufferline()` or handle the case where `get_bufferline()` is not available by using the following code:
+
+```lua
+local highlights = nil
+local ok, cat = pcall(require, "catppuccin.groups.integrations.bufferline")
+if ok then
+  -- Try different possible method names
+  if cat.get_bufferline then
+    highlights = cat.get_bufferline()
+  elseif cat.get then
+    highlights = cat.get()
+  end
+```
+* If there are issues with `eslint` in a Next.js project, ensure that the following dependencies are installed: `@next/eslint-plugin-next` and `eslint-plugin-react-hooks`.
+* If Telescope is still not working, ensure the configuration options are static values instead of function calls.
+* Ensure that treesitter is using gcc by setting `vim.env.CC = "gcc"` and `require("nvim-treesitter.install").compilers = { "gcc", "cc", "clang", "cl" }` and set `auto_install = false`.
+* If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+* If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+
+*   If getting errors related to `telescope.nvim` and `ripgrep` or `find`, the telescope configuration should implement a check for `ripgrep` and, if not found, fall back to `find` and `grep`.
+
+*   If there are issues with Catppuccin and bufferline, ensure that the `get()` method is replaced with `get_bufferline()` or handle the case where `get_bufferline()` is not available.
+
+*   If there are issues with `eslint` in a Next.js project, ensure that the following dependencies are installed: `@next/eslint-plugin-next`.
+
+*   If Telescope is still not working, ensure the configuration options are static values instead of function calls.
+
+*   Ensure that treesitter is using gcc by setting `vim.env.CC = "gcc"` and `require("nvim-treesitter.install").compilers = { "gcc", "cc", "clang", "cl" }` and set `auto_install = false`.
+
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   When horizontal scrolling is enabled on Windows, set the following options:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+*   When issues arise with the bufferline, ensure the `get()` method is replaced with `get_bufferline()` or handle the case where `get()` is not available by using the following code:
+
+```lua
+local highlights = nil
+local ok, cat = pcall(require, "catppuccin.groups.integrations.bufferline")
+if ok then
+  -- Try different possible method names
+  if cat.get_bufferline then
+    highlights = cat.get_bufferline()
+  elseif cat.get then
+    highlights = cat.get()
+  end
+}
+```
+*   When troubleshooting telescope:
+    *   Check what tools are available: `:CheckTools`
+    *   If ripgrep shows ❌, fix it: `:FixRipgrep`
+    *   Test Telescope: `:TestTelescope`
+    *   If Telescope is not working, ensure the configuration options are static values instead of function calls.
+*   For copilot, add commands:
+    * `:CopilotRestart` - Safely restart Copilot service
+    * `:CopilotClear` - Clear all Copilot suggestions
+    * `<leader>cp` - Restart Copilot
+    * `<leader>cc` - Clear Copilot suggestions
+    * If Copilot is generating "Invalid buffer id" errors, add the following configuration to `ai.lua` to handle the buffer lifecycle:
+
+```lua
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    -- Safely clear any pending suggestions for this buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Clean up when leaving buffers
+vim.api.nvim_create_autocmd("BufLeave", {
+  callback = function(args)
+    -- Safely clear suggestions when leaving buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Handle VimEnter to ensure clean state
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    -- Initialize copilot safely
+    pcall(function()
+      if copilot.suggestion then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+```
+*   When horizontal scrolling is enabled on Windows, set the following options:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+* For indent-blankline, ensure the configuration is compatible with version 3 and add proper exclusions:
+```lua
+ exclude = {
+   filetypes = {
+     "help",
+     "alpha",
+     "dashboard",
+     "neo-tree",
+     "Trouble",
+     "lazy",
+     "mason",
+     "notify",
+     "toggleterm",
+     "lazyterm",
+   },
+ },
+```
+* For telescope, it may be necessary to use Windows-compatible tools and to handle cases where ripgrep is not available. For example:
+```lua
+-- Determine available tools
+local has_ripgrep = vim.fn.executable("rg") == 1
+local has_grep = vim.fn.executable("grep") == 1
+local has_findstr = vim.fn.executable("findstr") == 1
+
+-- Choose the best available grep tool
+local grep_tool
+if has_ripgrep then
+  grep_tool = {
+    "rg",
+    "--color=never",
+    "--no-heading",
+    "--with-filename",
+    "--line-number",
+    "--column",
+    "--smart-case",
+  }
+elseif has_grep then
+  grep_tool = {
+    "grep",
+    "-n",
+    "-H",
+    "-i",
+    "-s",
+  }
+elseif has_findstr then
+  grep_tool = {
+    "findstr",
+    "/n",
+    "/i",
+    "/s",
+  }
+else
+  -- Fallback to basic findstr
+  grep_tool = {
+    "findstr",
+    "/n",
+  }
+end
+```
+*   For Git commands, add:
+```lua
+-- Git commands
+*   `GitStatus` - Show Git status
+*   `GitAdd [file]` - Add files (or all if no file specified)
+*   `GitCommit [message]` - Commit with optional message
+*   `GitPush [remote]` - Push to remote
+*   `GitPull [remote]` - Pull from remote
+*   `GitLog` - Show Git log
+
+-- Branch Operations:
+*   `GitBranch [name]` - List branches or create new branch
+*   `GitCheckout [branch]` - Checkout branch
+*   `GitMerge <branch>` - Merge specified branch
+
+-- Stash Operations:
+*   `GitStash [message]` - Stash changes with optional message
+*   `GitStashPop` - Pop latest stash
+*   `GitStashList` - List all stashes
+
+-- Advanced Operations:
+*   `GitDiff` - Open diff view
+*   `GitBlame` - Toggle blame view
+*   `GitReset [target]` - Reset changes
+*   `GitRemote` - Show remotes
+*   `GitFetch [remote]` - Fetch from remote
+```
+*   For Git Keybindings:
+```lua
+-- Fugitive Commands:
+*   `<leader>gs` - Git status
+*   `<leader>ga` - Git add all
+*   `<leader>gc` - Git commit
+*   `<leader>gp` - Git push
+*   `<leader>gl` - Git pull
+*   `<leader>gd` - Git diff view
+*   `<leader>gb` - Git blame toggle
+*   `<leader>glo` - Git log
+*   `<leader>gbr` - Git branch
+*   `<leader>gco` - Git checkout
+*   `<leader>gm` - Git merge
+*   `<leader>gst` - Git stash
+*   `<leader>gsp` - Git stash pop
+*   `<leader>gsl` - Git stash list
+*   `<leader>gr` - Git reset
+*   `<leader>gre` - Git remote
+*   `<leader>gf` - Git fetch
+
+-- Telescope Git:
+*   `<leader>tgf` - Git files
+*   `<leader>tgc` - Git commits
+*   `<leader>tgb` - Git branches
+*   `<leader>tgs` - Git status
+```
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+
+*   If getting errors related to `telescope.nvim` and `ripgrep` or `find`, the telescope configuration should implement a check for `ripgrep` and, if not found, fall back to `find` and `grep`.
+
+*   If there are issues with Catppuccin and bufferline, ensure that the `get()` method is replaced with `get_bufferline()` or handle the case where `get_bufferline()` is not available.
+
+*   If there are issues with `eslint` in a Next.js project, ensure that the following dependencies are installed: `@next/eslint-plugin-next`.
+
+*   If Telescope is still not working, ensure the configuration options are static values instead of function calls.
+
+*   Ensure that treesitter is using gcc by setting `vim.env.CC = "gcc"` and `require("nvim-treesitter.install").compilers = { "gcc", "cc", "clang", "cl" }` and set `auto_install = false`.
+
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   When horizontal scrolling is enabled on Windows, set the following options:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+*   When issues arise with the bufferline, ensure the `get()` method is replaced with `get_bufferline()` or handle the case where `get()` is not available by using the following code:
+
+```lua
+local highlights = nil
+local ok, cat = pcall(require, "catppuccin.groups.integrations.bufferline")
+if ok then
+  -- Try different possible method names
+  if cat.get_bufferline then
+    highlights = cat.get_bufferline()
+  elseif cat.get then
+    highlights = cat.get()
+  end
+}
+```
+*   When troubleshooting telescope:
+    *   Check what tools are available: `:CheckTools`
+    *   If ripgrep shows ❌, fix it: `:FixRipgrep`
+    *   Test Telescope: `:TestTelescope`
+    *   If Telescope is not working, ensure the configuration options are static values instead of function calls.
+*   For copilot, add commands:
+    * `:CopilotRestart` - Safely restart Copilot service
+    * `:CopilotClear` - Clear all Copilot suggestions
+    * `<leader>cp` - Restart Copilot
+    * `<leader>cc` - Clear Copilot suggestions
+    * If Copilot is generating "Invalid buffer id" errors, add the following configuration to `ai.lua` to handle the buffer lifecycle:
+
+```lua
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    -- Safely clear any pending suggestions for this buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Clean up when leaving buffers
+vim.api.nvim_create_autocmd("BufLeave", {
+  callback = function(args)
+    -- Safely clear suggestions when leaving buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+-- Handle VimEnter to ensure clean state
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    -- Initialize copilot safely
+    pcall(function()
+      if copilot.suggestion then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+```
+*   When horizontal scrolling is enabled on Windows, set the following options:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+* For indent-blankline, ensure the configuration is compatible with version 3 and add proper exclusions:
+```lua
+ exclude = {
+   filetypes = {
+     "help",
+     "alpha",
+     "dashboard",
+     "neo-tree",
+     "Trouble",
+     "lazy",
+     "mason",
+     "notify",
+     "toggleterm",
+     "lazyterm",
+   },
+ },
+```
+* For telescope, it may be necessary to use Windows-compatible tools and to handle cases where ripgrep is not available. For example:
+```lua
+-- Determine available tools
+local has_ripgrep = vim.fn.executable("rg") == 1
+local has_grep = vim.fn.executable("grep") == 1
+local has_findstr = vim.fn.executable("findstr") == 1
+
+-- Choose the best available grep tool
+local grep_tool
+if has_ripgrep then
+  grep_tool = {
+    "rg",
+    "--color=never",
+    "--no-heading",
+    "--with-filename",
+    "--line-number",
+    "--column",
+    "--smart-case",
+  }
+elseif has_grep then
+  grep_tool = {
+    "grep",
+    "-n",
+    "-H",
+    "-i",
+    "-s",
+  }
+elseif has_findstr then
+  grep_tool = {
+    "findstr",
+    "/n",
+    "/i",
+    "/s",
+  }
+else
+  -- Fallback to basic findstr
+  grep_tool = {
+    "findstr",
+    "/n",
+  }
+end
+```
+*   For Git commands, add:
+```lua
+-- Git commands
+*   `GitStatus` - Show Git status
+*   `GitAdd [file]` - Add files (or all if no file specified)
+*   `GitCommit [message]` - Commit with optional message
+*   `GitPush [remote]` - Push to remote
+*   `GitPull [remote]` - Pull from remote
+*   `GitLog` - Show Git log
+
+-- Branch Operations:
+*   `GitBranch [name]` - List branches or create new branch
+*   `GitCheckout [branch]` - Checkout branch
+*   `GitMerge <branch>` - Merge specified branch
+
+-- Stash Operations:
+*   `GitStash [message]` - Stash changes with optional message
+*   `GitStashPop` - Pop latest stash
+*   `GitStashList` - List all stashes
+
+-- Advanced Operations:
+*   `GitDiff` - Open diff view
+*   `GitBlame` - Toggle blame view
+*   `GitReset [target]` - Reset changes
+*   `GitRemote` - Show remotes
+*   `GitFetch [remote]` - Fetch from remote
+```
+*   For Git Keybindings:
+```lua
+-- Fugitive Commands:
+*   `<leader>gs` - Git status
+*   `<leader>ga` - Git add all
+*   `<leader>gc` - Git commit
+*   `<leader>gp` - Git push
+*   `<leader>gl` - Git pull
+*   `<leader>gd` - Git diff view
+*   `<leader>gb` - Git blame toggle
+*   `<leader>glo` - Git log
+*   `<leader>gbr` - Git branch
+*   `<leader>gco` - Git checkout
+*   `<leader>gm` - Git merge
+*   `<leader>gst` - Git stash
+*   `<leader>gsp` - Git stash pop
+*   `<leader>gsl` - Git stash list
+*   `<leader>gr` - Git reset
+*   `<leader>gre` - Git remote
+*   `<leader>gf` - Git fetch
+
+-- Telescope Git:
+*   `<leader>tgf` - Git files
+*   `<leader>tgc` - Git commits
+*   `<leader>tgb` - Git branches
+*   `<leader>tgs` - Git status
+```
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+
+*   If getting errors related to `telescope.nvim` and `ripgrep` or `find`, the telescope configuration should implement a check for `ripgrep` and, if not found, fall back to `find` and `grep`.
+
+*   If there are issues with Catppuccin and bufferline, ensure that the `get()` method is replaced with `get_bufferline()` or handle the case where `get_bufferline()` is not available.
+
+*   If there are issues with `eslint` in a Next.js project, ensure that the following dependencies are installed: `@next/eslint-plugin-next`.
+
+*   If Telescope is still not working, ensure the configuration options are static values instead of function calls.
+
+*   Ensure that treesitter is using gcc by setting `vim.env.CC = "gcc"` and `require("nvim-treesitter.install").compilers = { "gcc", "cc", "clang", "cl" }` and set `auto_install = false`.
+
+*   If getting "grep: Executable not found" error update the telescope configuration to implement a check for `grep` and, if not found, display an error message. The same should be done for ripgrep if it wasn't found.
+
+*   If the Copilot buffer id errors are still not resolved, check the Copilot configuration and improve null checks before performing operations on the Copilot suggestion object.
+*   When horizontal scrolling is enabled on Windows, set the following options:
+    *   `opt.sidescroll = 1` - Scroll horizontally by 1 character at a time
+    *   `opt.sidescrolloff = 8` - Keep 8 characters visible on each side when scrolling
+    *   `map("n", "zh", "zh", opts)` - Scroll left
+    *   `map("n", "zl", "zl", opts)` - Scroll right
+    *   `map("n", "zH", "zH", opts)` - Scroll left half screen
+    *   `map("n", "zL", "zL", opts)` - Scroll right half screen
+*   When issues arise with the bufferline, ensure the `get()` method is replaced with `get_bufferline()` or handle the case where `get()` is not available by using the following code:
+
+```lua
+local highlights = nil
+local ok, cat = pcall(require, "catppuccin.groups.integrations.bufferline")
+if ok then
+  -- Try different possible method names
+  if cat.get_bufferline then
+    highlights = cat.get_bufferline()
+  elseif cat.get then
+    highlights = cat.get()
+  end
+}
+```
+*   When troubleshooting telescope:
+    *   Check what tools are available: `:CheckTools`
+    *   If ripgrep shows ❌, fix it: `:FixRipgrep`
+    *   Test Telescope: `:TestTelescope`
+    *   If Telescope is not working, ensure the configuration options are static values instead of function calls.
+*   For copilot, add commands:
+    * `:CopilotRestart` - Safely restart Copilot service
+    * `:CopilotClear` - Clear all Copilot suggestions
+    * `<leader>cp` - Restart Copilot
+    * `<leader>cc` - Clear Copilot suggestions
+    * If Copilot is generating "Invalid buffer id" errors, add the following configuration to `ai.lua` to handle the buffer lifecycle:
+
+```lua
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    -- Safely clear any pending suggestions for this buffer
+    pcall(function()
+      if copilot.suggestion and copilot.suggestion.clear then
+        copilot.suggestion.clear()
+      end
+    end)
+  end,
+})
+
+--

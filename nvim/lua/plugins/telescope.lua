@@ -9,6 +9,58 @@ return {
       build = "make",
     },
     config = function()
+      -- Determine available tools
+      local has_ripgrep = vim.fn.executable("rg") == 1
+      local has_grep = vim.fn.executable("grep") == 1
+      local has_findstr = vim.fn.executable("findstr") == 1
+      
+      -- If ripgrep is not found but we know it's installed, try to add it to PATH
+      if not has_ripgrep then
+        local ripgrep_path = "C:\\Users\\carso\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\\ripgrep-14.1.1-x86_64-pc-windows-msvc"
+        if vim.fn.isdirectory(ripgrep_path) == 1 then
+          vim.env.PATH = ripgrep_path .. ";" .. vim.env.PATH
+          has_ripgrep = vim.fn.executable("rg") == 1
+          if has_ripgrep then
+            vim.notify("Added ripgrep to PATH: " .. ripgrep_path, vim.log.levels.INFO)
+          end
+        end
+      end
+      
+      -- Choose the best available grep tool
+      local grep_tool
+      if has_ripgrep then
+        grep_tool = {
+          "rg",
+          "--color=never",
+          "--no-heading",
+          "--with-filename",
+          "--line-number",
+          "--column",
+          "--smart-case",
+        }
+      elseif has_grep then
+        grep_tool = {
+          "grep",
+          "-n",
+          "-H",
+          "-i",
+          "-s",
+        }
+      elseif has_findstr then
+        grep_tool = {
+          "findstr",
+          "/n",
+          "/i",
+          "/s",
+        }
+      else
+        -- Fallback to basic findstr
+        grep_tool = {
+          "findstr",
+          "/n",
+        }
+      end
+      
       require("telescope").setup({
         defaults = {
           prompt_prefix = " ",
@@ -30,15 +82,7 @@ return {
             height = 0.80,
             preview_cutoff = 120,
           },
-          vimgrep_arguments = {
-            "rg",
-            "--color=never",
-            "--no-heading",
-            "--with-filename",
-            "--line-number",
-            "--column",
-            "--smart-case",
-          },
+          vimgrep_arguments = grep_tool,
           mappings = {
             i = {
               ["<C-n>"] = require("telescope.actions").cycle_history_next,
@@ -91,10 +135,10 @@ return {
           },
         },
         pickers = {
-          find_files = {
-            hidden = true,
-            find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/*" },
-          },
+                     find_files = {
+             hidden = true,
+             find_command = has_ripgrep and { "rg", "--files", "--hidden", "--glob", "!**/.git/*" } or { "cmd", "/c", "dir", "/b", "/s", "/a-d" },
+           },
           live_grep = {
             only_sort_text = true,
           },
@@ -116,21 +160,25 @@ return {
             show_pluto = true,
             show_moon = true,
           },
-          git_files = {
-            hidden = true,
-            show_untracked = true,
-          },
+                     git_files = {
+             hidden = true,
+             show_untracked = true,
+           },
+           git_commits = {
+             git_command = { "git", "log", "--pretty=oneline", "--abbrev-commit", "-n", "5000" },
+           },
+           git_branches = {
+             git_command = { "git", "branch", "--all", "--format=%(refname:short)" },
+           },
+           git_status = {
+             git_command = { "git", "status", "--porcelain" },
+           },
           colorscheme = {
             enable_preview = true,
           },
         },
         extensions = {
-          fzf = {
-            fuzzy = true,
-            override_generic_sorter = true,
-            override_file_sorter = true,
-            case_mode = "smart_case",
-          },
+          -- fzf extension will be loaded separately if available
         },
       })
     end,

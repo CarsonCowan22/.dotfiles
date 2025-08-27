@@ -1,9 +1,28 @@
--- Utility functions
+-- Utils module for AstroNvim-style configuration
 local M = {}
 
 -- Check if a plugin is loaded
-function M.has_plugin(plugin)
+function M.has(plugin)
   return require("lazy.core.config").plugins[plugin] ~= nil
+end
+
+-- LSP handler function
+function M.lsp_handler(server_name)
+  local server = require("lspconfig")[server_name]
+  local opts = require("lazy.core.config").plugins["nvim-lspconfig"].opts.servers[server_name] or {}
+  opts.capabilities = require("cmp_nvim_lsp").default_capabilities()
+  server.setup(opts)
+end
+
+-- On attach function for LSP
+function M.on_attach(callback)
+  vim.api.nvim_create_autocmd("LspAttach", {
+    callback = function(args)
+      local buffer = args.buf
+      local client = vim.lsp.get_client_by_id(args.data.client_id)
+      callback(client, buffer)
+    end,
+  })
 end
 
 -- Get the current file type
@@ -27,13 +46,13 @@ function M.get_project_root()
       "C:/Users/carso/Documents/privix",
       vim.fn.expand("~/Documents/privix")
     }
-    
+
     for _, path in ipairs(privix_paths) do
       if vim.fn.isdirectory(path) == 1 then
         return path
       end
     end
-    
+
     -- If none of the expected paths exist, return current directory
     return cwd
   end

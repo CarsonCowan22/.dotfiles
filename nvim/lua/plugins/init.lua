@@ -1,4 +1,12 @@
--- This file is intentionally empty
--- lazy.nvim will automatically load all .lua files in this directory
--- Each file should return a table of plugin specifications
-return {}
+-- AstroNvim-style plugin initialization
+return {
+  -- Core plugins
+  { import = "plugins.core" },
+  { import = "plugins.lsp" },
+  { import = "plugins.completion" },
+  { import = "plugins.ui" },
+  { import = "plugins.tools" },
+  { import = "plugins.git" },
+  { import = "plugins.ai" },
+  { import = "plugins.extras" },
+}

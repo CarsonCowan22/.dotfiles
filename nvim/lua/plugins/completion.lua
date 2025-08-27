@@ -1,7 +1,8 @@
--- Completion setup to match Cursor UI
+-- Completion configuration with nvim-cmp
 return {
   {
     "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
       "hrsh7th/cmp-buffer",
@@ -10,38 +11,19 @@ return {
       "L3MON4D3/LuaSnip",
       "saadparwaiz1/cmp_luasnip",
       "rafamadriz/friendly-snippets",
+      "zbirenbaum/copilot-cmp",
     },
-    config = function()
+    opts = function()
       local cmp = require("cmp")
       local luasnip = require("luasnip")
-
-      cmp.setup({
+      
+      return {
+        completion = {
+          completeopt = "menu,menuone,noinsert",
+        },
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
-          end,
-        },
-        window = {
-          completion = {
-            border = "rounded",
-            winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
-            col_offset = -3,
-            side_padding = 0,
-            scrollbar = false,
-          },
-          documentation = {
-            border = "rounded",
-            winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
-          },
-        },
-        formatting = {
-          fields = { "kind", "abbr", "menu" },
-          format = function(entry, vim_item)
-            local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
-            local strings = vim.split(kind.kind, "%s", { trimempty = true })
-            kind.kind = " " .. (strings[1] or "") .. " "
-            kind.menu = "    (" .. (strings[2] or "") .. ")"
-            return kind
           end,
         },
         mapping = {
@@ -75,17 +57,41 @@ return {
           end, { "i", "s" }),
         },
         sources = {
-          { name = "nvim_lsp", priority = 1000 },
+          { name = "copilot", priority = 1000 },
+          { name = "nvim_lsp", priority = 900 },
           { name = "luasnip", priority = 750 },
           { name = "buffer", priority = 500 },
           { name = "path", priority = 250 },
         },
+        formatting = {
+          format = function(entry, vim_item)
+            local kind = require("lspkind").cmp_format({ mode = "symbol_text", maxwidth = 50 })(entry, vim_item)
+            local strings = vim.split(kind.kind, "%s", { trimempty = true })
+            kind.kind = " " .. (strings[1] or "") .. " "
+            kind.menu = "    (" .. (strings[2] or "") .. ")"
+            return kind
+          end,
+        },
+        window = {
+          completion = {
+            border = "rounded",
+            winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+            col_offset = -3,
+            side_padding = 0,
+            scrollbar = false,
+          },
+          documentation = {
+            border = "rounded",
+            winhighlight = "Normal:Normal,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+          },
+        },
         experimental = {
           ghost_text = true,
         },
-      })
-
-      -- Load friendly snippets
+      }
+    end,
+    config = function(_, opts)
+      require("cmp").setup(opts)
       require("luasnip.loaders.from_vscode").lazy_load()
     end,
   },

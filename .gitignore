@@ -3,3 +3,8 @@
 nvim/.cursorignore
 nvim/nvim-win64.zip
 **/.specstory
+snyk/**
+
+# GitHub Copilot sensitive files
+github-copilot/apps.json
+**/apps.json

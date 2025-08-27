@@ -90,7 +90,7 @@ return {
           lualine_z = { "location" },
         },
         tabline = {},
-        extensions = { "neo-tree", "telescope", "fugitive" },
+        extensions = { "neo-tree" },
       })
     end,
   },

@@ -2,6 +2,11 @@
 -- Load core configuration files
 
 -- Bootstrap lazy.nvim
+-- Force MSYS2 MinGW64 toolchain for this Neovim process
+vim.env.PATH = "C:\\msys64\\mingw64\\bin;" .. (vim.env.PATH or "")
+vim.env.MAKE = vim.env.MAKE or "mingw32-make"
+
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
